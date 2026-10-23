@@ -52,6 +52,7 @@ pnpm db:generate     # src/db/schema.ts の変更からマイグレーション�
 ## 書き方
 
 - PR・学習ノート・ADR・コミットメッセージは日本語
+- オーナーへの返事は、作業の途中の短い報告も含めて、すべて日本語で書く
 - コミットメッセージは `種類: 内容`（例: `feat: 投稿の削除機能を追加`）。種類は feat / fix / docs / refactor / test / chore / ci
 - 識別子（変数名など）は英語。コメントは日本語で「なぜそうしているか」を書く
 - 学習ノートは、そのマイルストーンで初めて出てくる概念を「なぜ必要か → どう動くか → このコードのどこか」の順で説明する
@@ -67,14 +68,15 @@ pnpm db:generate     # src/db/schema.ts の変更からマイグレーション�
   - `validation.ts`: Zod による入力ルール（画面とサーバーで共用）
   - `components/`: 画面の部品
 - `src/features/media/`: 画像（ブラウザでの縮小、sharp での変換、保存先、上限の予約、使われていない画像の片付け）。posts と users の mutations から呼ぶ
+- `src/features/login-methods/`: ログイン方法（GitHub・Google・パスキー）のボタンと、設定画面での連携・解除・パスキーの管理
 - `src/lib/`: 共通の部品（認証の設定、セッションの取得、文字数の数え方、サイトの URL など）
 - `src/db/`: テーブル定義と DB 接続
 
 ## 技術スタック
 
-Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob と sharp（M2 から）/ Better Auth（GitHub の OAuth、M3 で Google とパスキー。パスワードなし）/ Tailwind CSS / lucide-react / Zod / Vitest / Playwright / GitHub Actions / pnpm
+Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob と sharp（M2 から）/ Better Auth（GitHub・Google の OAuth とパスキー。パスワードなし）/ Tailwind CSS / lucide-react / Zod / Vitest / Playwright / GitHub Actions / pnpm
 
-- 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）、ADR-0008（画像の保存）
+- 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）、ADR-0008（画像の保存）、ADR-0009（ログイン方法と連携）
 - Next.js 16 は学習データと違う点が多い。Next.js の機能を使うときは `node_modules/next/dist/docs/` の該当ページを先に読む（`AGENTS.md` を参照）
 
 ## DB のルール
@@ -91,6 +93,7 @@ Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（Post
 - DB をモックしない。テストは本物の PostgreSQL で動かす（作業環境ではローカルの PostgreSQL 16、CI ではサービスコンテナ）
 - 自動テストで通れない外部のログイン画面（GitHub など）だけは、ログイン済みの状態（セッションと署名付き Cookie）を直接作って代わりにする（`e2e/support/fixtures.ts`）
 - 画像の保存先は、テストと E2E ではディスク（`LOCAL_STORAGE_DIR`）。Vercel Blob にはつながない
+- パスキーは、E2E で Playwright の仮想の認証器（`context.credentials.install()`）を使って本当に登録・ログインする（`e2e/login-methods.spec.ts`）。E2E では Google の環境変数に仮の値を入れて、ボタンを表示させている
 - E2E でファイルを選ぶときは、ボタンを押して filechooser で選ぶ（`e2e/images.spec.ts` の `chooseFiles`）。ハイドレーション前の操作は無視されるため
 
 ## 作業環境の注意

@@ -12,6 +12,7 @@ import { deletePostAction } from "../actions";
 import type { PostView } from "../types";
 import { LikeButton } from "./like-button";
 import { PostImages } from "./post-images";
+import { ShareButton } from "./share-button";
 
 type PostCardProps = {
   post: PostView;
@@ -87,6 +88,7 @@ export function PostCard({ post, viewerId, highlighted, redirectHomeOnDelete }: 
             initialCount={post.likeCount}
             disabled={viewerId === null}
           />
+          <ShareButton path={postHref} title={`${post.author.name}さんの投稿`} />
           {viewerId === post.author.id && (
             <button
               type="button"
