@@ -10,7 +10,7 @@ M1 の学習ノートです。Next.js（App Router）でいちばん大事な「
 | 2 | `src/features/posts/components/timeline.tsx` | サーバーで DB からデータを取る |
 | 3 | `src/features/posts/components/like-button.tsx` | ブラウザで動く部品（Client Component） |
 | 4 | `src/features/posts/actions.ts` | ブラウザからサーバーの処理を呼ぶ（Server Actions） |
-| 5 | `src/features/posts/queries.ts` | DB から投稿を取り出すクエリ（サブテーマ） |
+| 5 | `src/features/posts/queries.ts` | DB から投稿を取り出すクエリ（詳しくはノート 02） |
 
 ## 要点 1: Server Component は「サーバーでデータを取り、画面を組み立てる」
 
@@ -73,20 +73,16 @@ sequenceDiagram
     B->>B: サーバーの値で表示を確定
 ```
 
-## サブテーマ: DB の設計
+## DB について
 
-テーブルの定義は `src/db/schema.ts` にあります。
-
-- `users`（ユーザー）、`posts`（投稿）、`likes`（いいね）、`follows`（フォロー）
-- `likes` は「ユーザー ID と投稿 ID の組み合わせ」を主キーにしている。同じ人が同じ投稿に 2 回いいねすることは、DB の仕組みで防がれる
-- 投稿の ID は連番。タイムラインの続きは「この ID より小さい投稿」で取得する（ページ番号を使わないので、読んでいる間に新しい投稿が増えても重複しない）
+DB の設計とクエリ（テーブル・制約・インデックス・トランザクションなど）は、[学習ノート 02: データベースの設計とクエリ](02-database.md) で詳しく説明しています。
 
 ## 読まなくてよいファイル
 
 品質のために入れていますが、学習の対象外です。
 
 - 自動テスト: `tests/`、`e2e/`、`*.test.ts`
-- 設定: `.github/`、`next.config.ts`、`vitest.config.ts`、`playwright.config.ts`、`drizzle.config.ts`、`eslint.config.mjs`、`vercel.json`
+- 設定: `.github/`、`next.config.ts`、`vitest.config.mts`、`playwright.config.ts`、`drizzle.config.ts`、`eslint.config.mjs`、`vercel.json`
 - ログインのライブラリの設定: `src/lib/auth.ts`
 - 自動で作られる SQL: `drizzle/`
 - 作業環境の準備: `scripts/`、`.claude/`

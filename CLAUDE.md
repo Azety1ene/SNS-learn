@@ -21,9 +21,9 @@
 ## 進め方（ADR-0006）
 
 - PR はマイルストーン（M1〜M4 と発展機能）ごとに 1 本。細かく分けすぎない
-- 学ぶテーマは絞る。メインは Next.js の「サーバーとブラウザの分担」（Server Components／Client Components／Server Actions）、サブは DB 設計とクエリ
+- 学ぶテーマは 2 つ。Next.js の「サーバーとブラウザの分担」（Server Components／Client Components／Server Actions）と、DB の設計とクエリ（オーナーの希望で、DB は実装も解説もしっかり行う。インデックスなどは EXPLAIN で測って判断し、結果をノートに載せる）
 - PR には「まず読むファイル（5 つ程度）」と「読まなくてよいファイル」を書く
-- 学習ノートはマイルストーンごとに 1 本、要点は 3 つまで
+- 学習ノートはテーマごとに分ける（例: 01 サーバーとブラウザ、02 データベース）。要点を絞り、DB は計測結果も含めて詳しく書く
 - 品質は落とさない。テスト・CI・セキュリティ対策は必ず入れる（ただし読むことは求めない）
 
 ## 作業の流れ
@@ -75,6 +75,14 @@ Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（Post
 
 - 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）
 - Next.js 16 は学習データと違う点が多い。Next.js の機能を使うときは `node_modules/next/dist/docs/` の該当ページを先に読む（`AGENTS.md` を参照）
+
+## DB のルール
+
+- テーブル定義の変更は `src/db/schema.ts` を直してから `pnpm db:generate` で `drizzle/` にマイグレーションを作る（`DATABASE_URL=postgres://postgres@127.0.0.1:5432/sns_dev` を付ける）
+- main にマージ済みのマイグレーションは書き換えない。直したいときは新しいマイグレーションを足す
+- 守るべきルールは、アプリ（Zod）と DB の制約の両方に入れる。DB のエラーコードは `src/lib/errors.ts` で分かりやすいメッセージに変える
+- 書き込みはできるだけ 1 文で完結させる（`on conflict do nothing`、条件付きの `update`／`delete` など）。複数の文が必要なら `db.transaction` でまとめる
+- インデックスは `EXPLAIN ANALYZE` で測ってから足し、結果を学習ノートに載せる
 
 ## テスト方針（ADR-0005）
 

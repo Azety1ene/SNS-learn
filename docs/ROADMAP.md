@@ -14,8 +14,8 @@ SNS を完成させるまでの手順と進捗です。PR は「まとまった�
 
 ## 学ぶテーマ（絞り込み）
 
-- **メイン**: Next.js の「サーバーとブラウザの分担」（Server Components／Client Components／Server Actions）
-- **サブ**: DB のテーブル設計とクエリ
+- **Next.js の「サーバーとブラウザの分担」**（Server Components／Client Components／Server Actions）
+- **DB の設計とクエリ**（テーブル・制約・インデックス・トランザクション・マイグレーション）
 - それ以外（テスト、CI、設定ファイル、ログインのライブラリの設定など）は品質のために入れますが、読まなくて構いません
 
 ## M0: 準備と方針決め ✅
@@ -28,7 +28,7 @@ SNS を完成させるまでの手順と進捗です。PR は「まとまった�
 ## M1: 動く最小の SNS
 
 - [x] Next.js の土台（TypeScript、Tailwind CSS、Lint、型チェック）
-- [x] DB のテーブル定義とマイグレーション
+- [x] DB のテーブル定義とマイグレーション（制約・インデックス・トランザクションまで）
 - [x] GitHub ログイン（Better Auth）と初回登録（@ID・表示名）
 - [x] 投稿・削除・返信、いいね、フォロー
 - [x] ホーム・みんなのタイムライン（下までスクロールすると続きを読み込む）
@@ -36,7 +36,7 @@ SNS を完成させるまでの手順と進捗です。PR は「まとまった�
 - [x] 自動テスト（本物の DB を使う結合テスト、ブラウザを動かす E2E テスト）と CI
 - [ ] 【あなた】Vercel・Neon・GitHub ログインの設定 → 本番公開（[デプロイ手順](deploy.md)）
 
-学習ノート: [01. サーバーとブラウザの分担](learning/01-server-and-client.md)
+学習ノート: [01. サーバーとブラウザの分担](learning/01-server-and-client.md)、[02. データベースの設計とクエリ](learning/02-database.md)
 
 ## M2: 画像とリンクのプレビュー
 
