@@ -5,7 +5,16 @@ import { Pool } from "pg";
 import * as schema from "./schema";
 
 function createPool() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // 接続プール: DB との接続をいくつか作っておき、問い合わせのたびに使い回す。
+  // 接続を毎回作るのは時間がかかる（特に Neon は TLS で暗号化して接続する）ため。
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // 1 つのサーバー（Vercel の関数 1 台）が同時に使う接続の上限
+    max: 10,
+    // DB につながらないときに、いつまでも待ち続けないようにする。
+    // Neon は休止から起きるのに数秒かかることがあるので、少し長めに 10 秒
+    connectionTimeoutMillis: 10_000,
+  });
   // Vercel の関数が休止する前に、使っていない接続をきちんと閉じてもらう
   attachDatabasePool(pool);
   return pool;

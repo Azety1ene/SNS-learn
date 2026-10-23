@@ -59,6 +59,7 @@ function toPostView(row: PostRow): PostView {
  * タイムラインを新しい順に 1 ページ分取得する。
  * cursor を渡すと「その ID より古い投稿」から取得する（ページ番号ではなく ID で区切るので、
  * 読んでいる間に新しい投稿が増えても、同じ投稿が 2 回出たり抜けたりしない）。
+ * OFFSET との速さの比較は docs/learning/02-database.md の 4-2 を参照。
  */
 export async function getTimeline(
   source: TimelineSource,

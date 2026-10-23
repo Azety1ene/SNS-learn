@@ -50,7 +50,14 @@ export const auth = betterAuth({
     ...(productionURL ? [productionURL] : []),
     ...previewHosts.map((host) => `https://${host}`),
   ],
-  database: drizzleAdapter(db, { provider: "pg", schema, usePlural: true }),
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+    usePlural: true,
+    // 初めてログインした人の「ユーザー作成」と「GitHub アカウントとの紐付け」を 1 つのトランザクションにする。
+    // 途中で失敗したときに、紐付けのないユーザーだけが残る（中途半端なデータになり、次のログインが失敗する原因にもなる）のを防ぐ
+    transaction: true,
+  }),
   socialProviders: {
     github: {
       clientId: requiredEnv("GITHUB_CLIENT_ID"),

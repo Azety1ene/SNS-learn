@@ -22,7 +22,7 @@ export async function completeOnboarding(
   try {
     const updated = await db
       .update(users)
-      .set({ handle: parsed.data.handle, name: parsed.data.name, updatedAt: new Date() })
+      .set({ handle: parsed.data.handle, name: parsed.data.name })
       // handle がまだ空の場合だけ更新する（登録済みの @ID を上書きさせない）
       .where(and(eq(users.id, userId), isNull(users.handle)))
       .returning({ handle: users.handle });
@@ -47,7 +47,7 @@ export async function updateProfile(
 
   await db
     .update(users)
-    .set({ name: parsed.data.name, bio: parsed.data.bio, updatedAt: new Date() })
+    .set({ name: parsed.data.name, bio: parsed.data.bio })
     .where(eq(users.id, userId));
 }
 

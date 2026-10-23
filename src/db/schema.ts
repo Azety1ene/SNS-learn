@@ -16,30 +16,42 @@ import {
 // 日時はすべて「タイムゾーン付き」で保存する（DB には UTC で入り、表示時に日本時間へ変換する）
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
+// 更新日時は、Drizzle で UPDATE するたびに自動で今の時刻になる（書き忘れを防ぐ）
 const updatedAt = () =>
-  timestamp("updated_at", { withTimezone: true }).notNull().defaultNow();
+  timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date());
 
 // ---------------------------------------------------------------------------
 // ログインのためのテーブル（Better Auth が読み書きする）
 // 項目は Better Auth が決めた形に合わせている。users だけは SNS 用の項目を追加している。
 // ---------------------------------------------------------------------------
 
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  /** 表示名（最初は GitHub の名前。プロフィール編集で変えられる） */
-  name: text("name").notNull(),
-  /** メールアドレス。画面には出さない */
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  /** アイコン画像の URL */
-  image: text("image"),
-  /** @ID（小文字の英数字と _）。初回登録で決めるまでは空 */
-  handle: text("handle").unique(),
-  /** 自己紹介 */
-  bio: text("bio").notNull().default(""),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    /** 表示名（最初は GitHub の名前。プロフィール編集で変えられる） */
+    name: text("name").notNull(),
+    /** メールアドレス。画面には出さない */
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    /** アイコン画像の URL */
+    image: text("image"),
+    /** @ID（小文字の英数字と _）。初回登録で決めるまでは空 */
+    handle: text("handle").unique(),
+    /** 自己紹介 */
+    bio: text("bio").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // @ID の形式（小文字の英数字と _ で 3〜15 文字）を DB でも守る。
+    // 小文字だけに限ることで、一意制約が「大文字・小文字を区別しない一意」として働く
+    check("users_handle_format", sql`${t.handle} ~ '^[a-z0-9_]{3,15}$'`),
+  ],
+);
 
 export const sessions = pgTable(
   "sessions",
@@ -140,7 +152,12 @@ export const posts = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
+    // タイムライン用: 返信ではない投稿（parent_id が空）だけを、ID の順に並べた索引（部分インデックス）。
+    // 効果の計測結果は docs/learning/02-database.md の 5-2 を参照
+    index("posts_timeline_idx").on(t.id).where(sql`${t.parentId} is null`),
+    // プロフィールの投稿一覧用。ユーザー削除時に、その人の投稿を探すのにも使われる
     index("posts_author_id_idx").on(t.authorId, t.id),
+    // 返信一覧用
     index("posts_parent_id_idx").on(t.parentId, t.id),
     // 文字数は画面とサーバーで 280 文字に制限している。DB では「空でない・極端に長くない」だけを最後の砦として守る
     check(

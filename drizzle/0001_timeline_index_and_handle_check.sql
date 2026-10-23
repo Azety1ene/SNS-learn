@@ -1,0 +1,2 @@
+CREATE INDEX "posts_timeline_idx" ON "posts" USING btree ("id") WHERE "posts"."parent_id" is null;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_handle_format" CHECK ("users"."handle" ~ '^[a-z0-9_]{3,15}$');
