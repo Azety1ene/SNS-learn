@@ -23,7 +23,8 @@ test("投稿の詳細ページとプロフィールを読める", async ({ page,
   const postId = await createPost(alice.id, "詳細ページの投稿");
 
   await page.goto(`/posts/${postId}`);
-  await expect(page.getByText("詳細ページの投稿")).toBeVisible();
+  // ページのタイトルにも本文が入るので、投稿の中を探す
+  await expect(page.getByRole("article").getByText("詳細ページの投稿")).toBeVisible();
   await expect(page.getByText("すると返信できます。")).toBeVisible();
 
   await page.goto("/u/alice");

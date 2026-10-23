@@ -11,6 +11,7 @@ import { formatDateTime } from "@/lib/format";
 import { deletePostAction } from "../actions";
 import type { PostView } from "../types";
 import { LikeButton } from "./like-button";
+import { PostImages } from "./post-images";
 
 type PostCardProps = {
   post: PostView;
@@ -67,6 +68,7 @@ export function PostCard({ post, viewerId, highlighted, redirectHomeOnDelete }: 
             {post.content}
           </p>
         </Link>
+        <PostImages images={post.images} />
 
         <div className="-ml-2 mt-1 flex items-center gap-4">
           <Link

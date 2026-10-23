@@ -22,7 +22,7 @@ export const imageFileSchema = z
 
 /** 画像の説明（代替テキスト）。画面が見えない人の読み上げなどに使われる。空でもよい */
 export const altTextSchema = z
-  .string()
+  .string({ error: "画像の説明を確認してください" })
   .transform(normalizeText)
   .refine((text) => countCharacters(text) <= ALT_TEXT_MAX_LENGTH, {
     error: `画像の説明は${ALT_TEXT_MAX_LENGTH}文字以内で入力してください`,
