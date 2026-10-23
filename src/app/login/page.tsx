@@ -17,8 +17,8 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">ログイン</h1>
         <p className="text-zinc-600 dark:text-zinc-400">
-          {googleLoginEnabled ? "GitHub か Google" : "GitHub"}
-          のアカウントでログインします。初めての方は、そのまま新規登録になります。パスキーを登録した方は、パスキーでもログインできます。
+          {`${googleLoginEnabled ? "GitHub か Google" : "GitHub"} のアカウントでログインします。`}
+          初めての方は、そのまま新規登録になります。パスキーを登録した方は、パスキーでもログインできます。
         </p>
       </div>
       <Suspense fallback={null}>
