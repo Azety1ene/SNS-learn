@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { AppBottomNav, AppHeader } from "@/components/app-header";
+import { baseOpenGraph, getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "SNS-learn", template: "%s | SNS-learn" },
-  description: "学習のために作っている、テキスト中心の SNS です。",
+  // 画像などの URL を「/og-image.png」のように書けるよう、サイトの URL を基準にする
+  metadataBase: getSiteUrl(),
+  title: { default: SITE_NAME, template: `%s | ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  // リンクを SNS やチャットに貼ったときのプレビュー（OGP）
+  openGraph: { ...baseOpenGraph, type: "website", title: SITE_NAME, description: SITE_DESCRIPTION },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { FormSkeleton } from "@/components/skeletons";
 import { signOutAction } from "@/features/users/actions";
+import { AvatarForm } from "@/features/users/components/avatar-form";
 import { ProfileForm } from "@/features/users/components/profile-form";
 import { getEditableProfile } from "@/features/users/queries";
 import { requireViewer } from "@/lib/session";
@@ -27,7 +28,16 @@ async function SettingsContent() {
 
   return (
     <>
-      <section aria-labelledby="profile-heading">
+      <section aria-labelledby="avatar-heading">
+        <h2 id="avatar-heading" className="px-4 pt-6 font-bold">
+          アイコン
+        </h2>
+        <AvatarForm name={viewer.name} image={viewer.image} />
+      </section>
+      <section
+        aria-labelledby="profile-heading"
+        className="border-t border-zinc-200 dark:border-zinc-800"
+      >
         <h2 id="profile-heading" className="px-4 pt-6 font-bold">
           プロフィール
         </h2>

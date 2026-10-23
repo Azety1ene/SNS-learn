@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import { defineConfig } from "vitest/config";
 
@@ -22,6 +23,8 @@ export default defineConfig({
       DATABASE_URL: testDatabaseURL,
       BETTER_AUTH_SECRET: "test-only-secret-not-used-in-production",
       BETTER_AUTH_URL: "http://localhost:3000",
+      // 画像の保存先（テストでは一時フォルダのディスクに保存する）
+      LOCAL_STORAGE_DIR: path.join(os.tmpdir(), "sns-learn-test-storage"),
     },
     // テストどうしで同じ DB を使うので、ファイルは 1 つずつ順番に実行する
     fileParallelism: false,

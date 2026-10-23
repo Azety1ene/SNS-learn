@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // レスポンスに「Next.js で作られている」という情報を付けない（攻撃者への手がかりを減らす）
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // Server Actions で受け取れるデータの大きさの上限（初期値は 1MB）。画像 4 枚（1 枚 1MB まで）を送れるようにする。
+      // Vercel の関数が受け取れる上限（4.5MB）より小さくしておく
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     // 外部の画像は、許可した場所のものだけを表示する（GitHub のアイコン）
     remotePatterns: [new URL("https://avatars.githubusercontent.com/**")],

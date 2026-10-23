@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { follows, likes, posts, users } from "@/db/schema";
+import { follows, likes, media, postMedia, posts, users } from "@/db/schema";
 import { getPgErrorCode } from "@/lib/errors";
 import { createUser } from "../../tests/support/factories";
 
@@ -58,6 +58,88 @@ describe("制約", () => {
         db.insert(follows).values({ followerId: alice.id, followingId: alice.id }),
       ),
     ).toBe(CHECK_VIOLATION);
+  });
+});
+
+describe("画像の制約", () => {
+  /** 画像の行を 1 つ作る */
+  async function insertMedia(ownerId: string, n: number) {
+    const [row] = await db
+      .insert(media)
+      .values({
+        ownerId,
+        purpose: "post",
+        pathname: `local/post/${n}.webp`,
+        url: `/local-media/local/post/${n}.webp`,
+        sizeBytes: 1000,
+        width: 10,
+        height: 10,
+      })
+      .returning();
+    return row;
+  }
+
+  it("1 つの投稿に付けられる画像は 4 枚まで（何枚目かは 0〜3 だけ、同じ番号は 2 回使えない）", async () => {
+    const alice = await createUser();
+    const [post] = await db.insert(posts).values({ authorId: alice.id, content: "投稿" }).returning();
+    for (let position = 0; position < 4; position++) {
+      const image = await insertMedia(alice.id, position);
+      await db.insert(postMedia).values({ postId: post.id, position, mediaId: image.id });
+    }
+
+    const fifth = await insertMedia(alice.id, 4);
+    expect(
+      await pgErrorCodeOf(() =>
+        db.insert(postMedia).values({ postId: post.id, position: 4, mediaId: fifth.id }),
+      ),
+    ).toBe(CHECK_VIOLATION);
+    expect(
+      await pgErrorCodeOf(() =>
+        db.insert(postMedia).values({ postId: post.id, position: 0, mediaId: fifth.id }),
+      ),
+    ).toBe(UNIQUE_VIOLATION);
+  });
+
+  it("1 枚の画像を 2 つの投稿で使い回すことはできない", async () => {
+    const alice = await createUser();
+    const [first, second] = await db
+      .insert(posts)
+      .values([
+        { authorId: alice.id, content: "1 つ目" },
+        { authorId: alice.id, content: "2 つ目" },
+      ])
+      .returning();
+    const image = await insertMedia(alice.id, 1);
+    await db.insert(postMedia).values({ postId: first.id, position: 0, mediaId: image.id });
+    expect(
+      await pgErrorCodeOf(() =>
+        db.insert(postMedia).values({ postId: second.id, position: 0, mediaId: image.id }),
+      ),
+    ).toBe(UNIQUE_VIOLATION);
+  });
+
+  it("用途は post か avatar だけ", async () => {
+    const alice = await createUser();
+    expect(
+      await pgErrorCodeOf(() =>
+        db.execute(
+          sql`insert into media (owner_id, purpose, pathname, size_bytes, width, height)
+              values (${alice.id}, 'video', 'local/video/1.mp4', 1000, 10, 10)`,
+        ),
+      ),
+    ).toBe(CHECK_VIOLATION);
+  });
+
+  it("投稿を消すと画像の紐付けは消えるが、画像の行は残る（ファイルの片付けはアプリが行う）", async () => {
+    const alice = await createUser();
+    const [post] = await db.insert(posts).values({ authorId: alice.id, content: "投稿" }).returning();
+    const image = await insertMedia(alice.id, 1);
+    await db.insert(postMedia).values({ postId: post.id, position: 0, mediaId: image.id });
+
+    await db.delete(posts).where(eq(posts.id, post.id));
+
+    expect(await db.select().from(postMedia)).toEqual([]);
+    expect(await db.select().from(media)).toHaveLength(1);
   });
 });
 

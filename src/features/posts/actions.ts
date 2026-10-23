@@ -35,10 +35,17 @@ export async function createPostAction(
     return { ...prevState, error: "返信先の投稿が見つかりません" };
   }
 
+  // 画像と、それぞれの説明（代替テキスト）は、同じ順番で送られてくる
+  const altTexts = formData.getAll("altTexts");
+  const images = formData
+    .getAll("images")
+    .map((file, index) => ({ file, altText: altTexts[index] ?? "" }));
+
   try {
     await createPost(viewer.id, {
       content: formData.get("content"),
       parentId: parentId?.data,
+      images,
     });
   } catch (error) {
     if (error instanceof UserFacingError) return { ...prevState, error: error.message };

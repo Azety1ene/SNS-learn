@@ -12,3 +12,10 @@ export function countCharacters(text: string): number {
 export function normalizeText(text: string): string {
   return text.replace(/\r\n?/g, "\n").trim();
 }
+
+/** 見た目の文字数で maxLength 文字までに切り詰める。切り詰めたときは末尾に「…」を付ける */
+export function truncateText(text: string, maxLength: number): string {
+  const characters = Array.from(segmenter.segment(text), (part) => part.segment);
+  if (characters.length <= maxLength) return text;
+  return `${characters.slice(0, maxLength).join("")}…`;
+}

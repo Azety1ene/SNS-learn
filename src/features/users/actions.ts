@@ -7,7 +7,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { UserFacingError } from "@/lib/errors";
 import { getRegisteredViewer, getViewer } from "@/lib/session";
-import { completeOnboarding, setFollow, updateProfile } from "./mutations";
+import { completeOnboarding, setFollow, updateAvatar, updateProfile } from "./mutations";
 
 export type FormState = { error?: string; saved?: boolean };
 
@@ -48,6 +48,25 @@ export async function updateProfileAction(
     if (error instanceof UserFacingError) return { error: error.message };
     throw error;
   }
+  refresh();
+  return { saved: true };
+}
+
+/** アイコンの変更フォームから呼ばれる。画像はブラウザで縮小してから送られてくる */
+export async function updateAvatarAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const viewer = await getRegisteredViewer();
+  if (!viewer) return { error: "ログインしてください" };
+
+  try {
+    await updateAvatar(viewer.id, formData.get("avatar"));
+  } catch (error) {
+    if (error instanceof UserFacingError) return { error: error.message };
+    throw error;
+  }
+  // ヘッダーなど、アイコンを表示している部分を描き直す
   refresh();
   return { saved: true };
 }

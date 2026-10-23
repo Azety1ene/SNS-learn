@@ -9,8 +9,33 @@ import { PostComposer } from "@/features/posts/components/post-composer";
 import { getPost, getReplies } from "@/features/posts/queries";
 import { postIdSchema } from "@/features/posts/validation";
 import { getRegisteredViewer } from "@/lib/session";
+import { baseOpenGraph } from "@/lib/site";
+import { truncateText } from "@/lib/text";
 
-export const metadata: Metadata = { title: "投稿" };
+/** ページのタイトルと、リンクを貼ったときのプレビュー（OGP）の内容 */
+export async function generateMetadata({
+  params,
+}: PageProps<"/posts/[postId]">): Promise<Metadata> {
+  const postId = postIdSchema.safeParse((await params).postId);
+  const post = postId.success ? await getPost(postId.data, null) : null;
+  if (!post) return { title: "投稿が見つかりません" };
+
+  const author = `${post.author.name}さん（@${post.author.handle}）`;
+  // 改行はプレビューでは表示されないので、空白 1 つにまとめる
+  const text = post.content.replace(/\s+/g, " ");
+  return {
+    title: `${post.author.name}さんの投稿「${truncateText(text, 30)}」`,
+    description: truncateText(text, 120),
+    openGraph: {
+      ...baseOpenGraph,
+      type: "article",
+      title: `${author}の投稿`,
+      description: truncateText(text, 120),
+      url: `/posts/${post.id}`,
+      publishedTime: post.createdAt,
+    },
+  };
+}
 
 /** 投稿の詳細（返信先・投稿本体・返信フォーム・返信の一覧） */
 export default function PostPage({ params }: PageProps<"/posts/[postId]">) {

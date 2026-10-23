@@ -1,6 +1,10 @@
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
+import { db } from "@/db";
+import { media, users } from "@/db/schema";
 import { createUser } from "../../../tests/support/factories";
-import { completeOnboarding, setFollow, updateProfile } from "./mutations";
+import { countStoredFiles, createTestImageFile } from "../../../tests/support/images";
+import { completeOnboarding, setFollow, updateAvatar, updateProfile } from "./mutations";
 import {
   getEditableProfile,
   getFollowers,
@@ -101,5 +105,27 @@ describe("getProfileByHandle", () => {
     const alice = await createUser();
     expect((await getProfileByHandle(alice.handle!, alice.id))?.isViewer).toBe(true);
     expect((await getProfileByHandle(alice.handle!, null))?.isViewer).toBe(false);
+  });
+});
+
+describe("updateAvatar", () => {
+  it("アイコンを変えると users.image が新しい画像になり、前のアイコンの画像は消える", async () => {
+    const alice = await createUser();
+    const first = await updateAvatar(alice.id, await createTestImageFile());
+    const second = await updateAvatar(alice.id, await createTestImageFile());
+
+    const [row] = await db.select({ image: users.image }).from(users).where(eq(users.id, alice.id));
+    expect(row.image).toBe(second.image);
+    expect(second.image).not.toBe(first.image);
+    // ファイルは今のアイコンの 1 つだけが残る
+    expect(await countStoredFiles()).toBe(1);
+    const rows = await db.select().from(media).orderBy(media.id);
+    expect(rows.map((r) => r.deletedAt === null)).toEqual([false, true]);
+  });
+
+  it("画像ファイル以外は受け付けない", async () => {
+    const alice = await createUser();
+    await expect(updateAvatar(alice.id, "not-a-file")).rejects.toThrow("画像を選んでください");
+    await expect(updateAvatar(alice.id, null)).rejects.toThrow("画像を選んでください");
   });
 });

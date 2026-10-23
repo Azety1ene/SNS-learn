@@ -18,6 +18,16 @@ export type PostView = {
   replyCount: number;
   /** 見ている人がいいね済みか（ログインしていなければ false） */
   likedByMe: boolean;
+  /** 投稿に付いた画像（0〜4 枚、並び順どおり） */
+  images: PostImage[];
+};
+
+export type PostImage = {
+  url: string;
+  width: number;
+  height: number;
+  /** 代替テキスト（画像の説明）。空のこともある */
+  alt: string;
 };
 
 export type TimelinePage = {
