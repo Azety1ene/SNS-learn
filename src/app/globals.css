@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  /* 日本語を読みやすく表示するため、端末に入っているフォントを使う */
+  --font-sans:
+    system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP", Meiryo, sans-serif;
+}
+
+html {
+  /* スマホのブラウザが勝手に文字を大きくしないようにする */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}

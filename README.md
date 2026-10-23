@@ -10,13 +10,25 @@ X（旧Twitter）のような、テキスト中心の SNS を作る学習プロ�
 
 | 内容 | 場所 |
 | --- | --- |
-| 手順と進捗 | [docs/ROADMAP.md](docs/ROADMAP.md) |
+| 進め方と進捗 | [docs/ROADMAP.md](docs/ROADMAP.md) |
 | 要件定義 | [docs/requirements.md](docs/requirements.md) |
 | 設計判断の記録（ADR） | [docs/adr/](docs/adr/README.md) |
 | 学習ノート | [docs/learning/](docs/learning/) |
+| デプロイ手順 | [docs/deploy.md](docs/deploy.md) |
 
 ## 技術スタック
 
-Next.js（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob / Better Auth / Tailwind CSS / shadcn/ui / Vitest / Playwright / GitHub Actions
+Next.js 16（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Better Auth / Tailwind CSS / Zod / Vitest / Playwright / GitHub Actions
 
-選んだ理由は [ADR-0002（技術スタック）](docs/adr/0002-tech-stack.md) と [ADR-0003（認証方式）](docs/adr/0003-authentication.md) にあります。
+選んだ理由は [ADR-0002（技術スタック）](docs/adr/0002-tech-stack.md)、[ADR-0003（認証方式）](docs/adr/0003-authentication.md)、[ADR-0007（Cache Components）](docs/adr/0007-cache-components.md) にあります。
+
+## 開発（Claude の作業環境向け）
+
+```bash
+pnpm install
+pnpm db:local     # PostgreSQL を起動
+pnpm test         # 単体テスト・結合テスト
+pnpm test:e2e     # E2E テスト
+```
+
+環境変数は [.env.example](.env.example) を参照してください。
