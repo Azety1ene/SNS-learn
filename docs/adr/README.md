@@ -10,5 +10,7 @@ ADR（Architecture Decision Record）は、設計上の大事な判断を「背�
 | [0001](0001-record-architecture-decisions.md) | 設計判断を ADR として記録する | 承認 |
 | [0002](0002-tech-stack.md) | 技術スタック | 承認 |
 | [0003](0003-authentication.md) | 認証方式 | 承認 |
-| [0004](0004-development-workflow.md) | 開発の進め方 | 承認 |
+| [0004](0004-development-workflow.md) | 開発の進め方 | 一部置き換え済み（ADR-0006） |
 | [0005](0005-testing-policy.md) | テスト方針 | 承認 |
+| [0006](0006-milestone-workflow.md) | 進め方の見直し（マイルストーンごとの PR・学ぶ内容の絞り込み） | 承認 |
+| [0007](0007-cache-components.md) | Cache Components を使い、画面部品は Tailwind CSS で作る | 承認 |

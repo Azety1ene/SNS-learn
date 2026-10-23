@@ -7,44 +7,79 @@
 - X（旧Twitter）風のテキスト中心 SNS を作る。最大の目的はオーナーの学習
 - 学習用でも品質は落とさない。製品コードにモックやダミー実装を入れない。最終的に本番で運用する
 - 無料枠だけで運用する（カード登録なし）
-- 進捗と次のステップ: `docs/ROADMAP.md`（チェックリストが進捗の正）
-- 要件: `docs/requirements.md` ／ 設計判断: `docs/adr/` ／ 学習ノート: `docs/learning/`
+- 進捗と次のマイルストーン: `docs/ROADMAP.md`（チェックリストが進捗の正）
+- 要件: `docs/requirements.md` ／ 設計判断: `docs/adr/` ／ 学習ノート: `docs/learning/` ／ デプロイ手順: `docs/deploy.md`
 
 ## オーナーについて
 
 - 実務経験あり。Next.js を勉強中
 - 学び方は「Claude が書いたコード・PR・学習ノートを読んで理解する」。質問は PR のコメントかチャットで来る
-- 操作はスマホのみで、コマンドは実行できない。動作確認は Vercel のプレビュー URL、コードは GitHub アプリで読む
+- 操作はスマホのみで、コマンドは実行できない。動作確認は Vercel の URL、コードは GitHub アプリで読む
 - 外部サービスの設定（Vercel、Neon、OAuth アプリの登録など）はオーナーがスマホで行う。手順はボタンや画面の名前まで具体的に案内する
 - 秘密情報（API キーなど）をチャットに貼ってもらわない。必ず各サービスの設定画面に直接入力してもらう
 
+## 進め方（ADR-0006）
+
+- PR はマイルストーン（M1〜M4 と発展機能）ごとに 1 本。細かく分けすぎない
+- 学ぶテーマは絞る。メインは Next.js の「サーバーとブラウザの分担」（Server Components／Client Components／Server Actions）、サブは DB 設計とクエリ
+- PR には「まず読むファイル（5 つ程度）」と「読まなくてよいファイル」を書く
+- 学習ノートはマイルストーンごとに 1 本、要点は 3 つまで
+- 品質は落とさない。テスト・CI・セキュリティ対策は必ず入れる（ただし読むことは求めない）
+
 ## 作業の流れ
 
-1. `docs/ROADMAP.md` で次のステップを確認する
-2. 最新の main から作業ブランチを作る（例: `step/1-1-nextjs-scaffold`）。main へ直接 push しない
-3. 実装とテストを書く。push 前に lint・型チェック・テストを実行して通す
-4. 学習ノートを追加・更新し、ROADMAP のチェックを更新する
+1. `docs/ROADMAP.md` で次のマイルストーンを確認する
+2. 最新の main から作業ブランチを作る（例: `m2/images`）。main へ直接 push しない
+3. 実装とテストを書く。push 前に `pnpm lint`・`pnpm typecheck`・`pnpm test`・`pnpm test:e2e` を通す
+4. 学習ノートを追加し、ROADMAP のチェックを更新する
 5. PR を作る（`.github/pull_request_template.md` の形式、日本語）
 6. オーナーの確認・質問に対応する。マージはオーナーが行う
+
+## よく使うコマンド
+
+```bash
+pnpm db:local        # 作業環境の PostgreSQL を起動（セッション開始時に自動で実行される）
+pnpm dev             # 開発サーバー（DATABASE_URL などの環境変数が必要。.env.example を参照）
+pnpm lint            # ESLint
+pnpm typecheck       # 型チェック（ルートの型を生成してから tsc）
+pnpm test            # 単体テスト・結合テスト（本物の PostgreSQL の sns_test を使う）
+pnpm test:e2e        # E2E テスト（ビルドして起動し、Chromium で操作。DB は sns_e2e）
+pnpm db:generate     # src/db/schema.ts の変更からマイグレーションを作る（DATABASE_URL が必要）
+```
+
+- E2E テストを作業環境で動かすときは `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` が必要（セッション開始時に自動で設定される）
 
 ## 書き方
 
 - PR・学習ノート・ADR・コミットメッセージは日本語
 - コミットメッセージは `種類: 内容`（例: `feat: 投稿の削除機能を追加`）。種類は feat / fix / docs / refactor / test / chore / ci
 - 識別子（変数名など）は英語。コメントは日本語で「なぜそうしているか」を書く
-- 学習ノートは、そのステップで初めて出てくる概念を「なぜ必要か → どう動くか → このコードのどこか」の順で説明する
+- 学習ノートは、そのマイルストーンで初めて出てくる概念を「なぜ必要か → どう動くか → このコードのどこか」の順で説明する
 - 図は Mermaid で書き、スマホで読めるよう縦長（`flowchart TD` など）にする
+
+## コードの構成
+
+- `src/app/`: ページ（URL ごとのファイル）。ページは async にせず、DB や Cookie を読む部分を `<Suspense>` で囲む（ADR-0007）
+- `src/features/<機能>/`: 機能ごとのコード
+  - `queries.ts`: DB からの読み取り（`server-only`）
+  - `mutations.ts`: DB への書き込みとルールの確認。「誰が」を引数で受け取る（テストしやすくするため）
+  - `actions.ts`: Server Actions。本人確認 → 入力チェック → mutations を呼ぶ → `refresh()` だけの薄い層
+  - `validation.ts`: Zod による入力ルール（画面とサーバーで共用）
+  - `components/`: 画面の部品
+- `src/lib/`: 共通の部品（認証の設定、セッションの取得、文字数の数え方など）
+- `src/db/`: テーブル定義と DB 接続
 
 ## 技術スタック
 
-Next.js（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob / Better Auth（Google・GitHub の OAuth＋パスキー、パスワードなし）/ Tailwind CSS / shadcn/ui / Zod / Vitest / Playwright / GitHub Actions / pnpm
+Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob（M2 から）/ Better Auth（GitHub の OAuth、M3 で Google とパスキー。パスワードなし）/ Tailwind CSS / lucide-react / Zod / Vitest / Playwright / GitHub Actions / pnpm
 
-理由は ADR-0002（技術スタック）と ADR-0003（認証方式）。
+- 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）
+- Next.js 16 は学習データと違う点が多い。Next.js の機能を使うときは `node_modules/next/dist/docs/` の該当ページを先に読む（`AGENTS.md` を参照）
 
 ## テスト方針（ADR-0005）
 
-- DB をモックしない。テストは本物の PostgreSQL で動かす（作業環境には PostgreSQL 16 がある。CI ではサービスコンテナを使う）
-- 自動テストで通れない外部のログイン画面（Google/GitHub）だけは、ログイン済みの状態を DB に直接作って代わりにする
+- DB をモックしない。テストは本物の PostgreSQL で動かす（作業環境ではローカルの PostgreSQL 16、CI ではサービスコンテナ）
+- 自動テストで通れない外部のログイン画面（GitHub など）だけは、ログイン済みの状態（セッションと署名付き Cookie）を直接作って代わりにする（`e2e/support/fixtures.ts`）
 
 ## 作業環境の注意
 
@@ -56,4 +91,5 @@ Next.js（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM
 
 - Vercel Blob はアップロード等が月 2,000 回、保存 1GB まで。画像機能は必ず上限のガードとセットで作る
 - Neon は保存 0.5GB、DB ブランチ 10 個まで。5 分アクセスがないと休止し、次のアクセスで自動的に再開する
+- サーバー（Vercel）と DB（Neon）はどちらもシンガポールに置く（Neon に東京がないため。`vercel.json`）
 - 上限の一覧は `docs/requirements.md` の「6. 制約（無料枠）」にある
