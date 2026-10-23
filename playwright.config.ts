@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
-import { E2E_AUTH_SECRET, E2E_BASE_URL, E2E_DATABASE_URL, E2E_PORT } from "./e2e/support/config";
+import {
+  E2E_AUTH_SECRET,
+  E2E_BASE_URL,
+  E2E_DATABASE_URL,
+  E2E_PORT,
+  E2E_STORAGE_DIR,
+} from "./e2e/support/config";
 
 // E2E テスト: 本物のブラウザで、本番と同じようにビルドしたアプリを操作して確かめる
 export default defineConfig({
@@ -30,6 +36,7 @@ export default defineConfig({
       // GitHub へのログインはテストでは行わないので、仮の値を入れておく
       GITHUB_CLIENT_ID: "e2e-not-used",
       GITHUB_CLIENT_SECRET: "e2e-not-used",
+      LOCAL_STORAGE_DIR: E2E_STORAGE_DIR,
     },
   },
 });

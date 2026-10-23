@@ -8,6 +8,7 @@ import {
   integer,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -202,5 +203,80 @@ export const follows = pgTable(
     primaryKey({ columns: [t.followerId, t.followingId] }),
     index("follows_following_id_idx").on(t.followingId),
     check("follows_not_self", sql`${t.followerId} <> ${t.followingId}`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// 画像のテーブル（M2）
+// 設計の理由は docs/adr/0008-image-storage.md、計測結果は docs/learning/03-images.md を参照
+// ---------------------------------------------------------------------------
+
+/**
+ * アップロードされた画像 1 枚（投稿の画像とアイコンの両方）。
+ * 画像そのものは Vercel Blob に置き、ここには「どこにあるか」と大きさなどを記録する。
+ *
+ * 1 行の状態は 3 つ:
+ * - アップロード中: url が空（枠を予約しただけ）
+ * - 使用中: url があり、deleted_at が空
+ * - 削除済み: deleted_at がある。容量の計算からは外すが、
+ *   「1 日に何枚アップロードしたか」を数えるため、しばらく行を残す（論理削除）
+ */
+export const media = pgTable(
+  "media",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 用途: post（投稿の画像）または avatar（アイコン） */
+    purpose: text("purpose", { enum: ["post", "avatar"] }).notNull(),
+    /** 保存先でのファイルの場所。アップロードの前に決めておくので、途中で失敗しても後片付けできる */
+    pathname: text("pathname").notNull().unique(),
+    /** 画面に表示するときの URL。アップロードが終わるまでは空 */
+    url: text("url").unique(),
+    sizeBytes: integer("size_bytes").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    createdAt: createdAt(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (t) => [
+    // 「この人が最近何枚アップロードしたか」を数えるため。ユーザー削除時に、その人の画像を探すのにも使われる
+    index("media_owner_id_created_at_idx").on(t.ownerId, t.createdAt),
+    // 「サービス全体で直近 31 日に何枚アップロードされたか」を数えるため
+    index("media_created_at_idx").on(t.createdAt),
+    // 使用中の行（deleted_at が空）だけの部分インデックス。合計容量の計算と、使われていない画像の検索に使う。
+    // 削除済みの行がどれだけ増えても、この 2 つの処理の速さが変わらない（計測は docs/learning/03-images.md）
+    index("media_live_idx").on(t.sizeBytes).where(sql`${t.deletedAt} is null`),
+    check("media_purpose", sql`${t.purpose} in ('post', 'avatar')`),
+    check("media_size_positive", sql`${t.sizeBytes} > 0`),
+    check("media_dimensions_positive", sql`${t.width} > 0 and ${t.height} > 0`),
+  ],
+);
+
+/** 投稿に付けた画像（どの投稿の、何枚目か） */
+export const postMedia = pgTable(
+  "post_media",
+  {
+    postId: bigint("post_id", { mode: "number" })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    /** 何枚目か（0〜3） */
+    position: smallint("position").notNull(),
+    /** 1 枚の画像を 2 つの投稿で使い回すことはないので、一意にする */
+    mediaId: bigint("media_id", { mode: "number" })
+      .notNull()
+      .unique()
+      .references(() => media.id, { onDelete: "cascade" }),
+    /** 代替テキスト（画像の説明）。画面が見えない人の読み上げなどに使われる */
+    altText: text("alt_text").notNull().default(""),
+  },
+  (t) => [
+    // 「投稿 ID と何枚目か」の組み合わせを主キーにし、何枚目かを 0〜3 に限ることで、
+    // 1 つの投稿に付けられる画像は 4 枚までになる（アプリのチェックをすり抜けても DB が守る）
+    primaryKey({ columns: [t.postId, t.position] }),
+    check("post_media_position_range", sql`${t.position} between 0 and 3`),
+    // 文字数は画面とサーバーで 1000 文字に制限している。DB では極端に長いものだけを防ぐ
+    check("post_media_alt_text_length", sql`char_length(${t.altText}) <= 10000`),
   ],
 );

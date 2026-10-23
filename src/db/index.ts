@@ -27,3 +27,6 @@ const pool = globalForDb.pool ?? createPool();
 if (process.env.NODE_ENV !== "production") globalForDb.pool = pool;
 
 export const db = drizzle(pool, { schema });
+
+/** db.transaction の中で使う、トランザクション用の接続の型 */
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

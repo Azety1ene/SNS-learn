@@ -24,7 +24,7 @@ export const test = base.extend<Fixtures>({
     const pool = new pg.Pool({ connectionString: E2E_DATABASE_URL, max: 2 });
     // テストごとに DB を空にして、テストどうしが影響し合わないようにする
     await pool.query(
-      "truncate table users, sessions, accounts, verifications, rate_limits, posts, likes, follows restart identity cascade",
+      "truncate table users, sessions, accounts, verifications, rate_limits, posts, likes, follows, media, post_media restart identity cascade",
     );
     await use(pool);
     await pool.end();

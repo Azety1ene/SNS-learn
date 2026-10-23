@@ -15,6 +15,13 @@
       "when": 1792729443160,
       "tag": "0001_timeline_index_and_handle_check",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792737121731,
+      "tag": "0002_media",
+      "breakpoints": true
     }
   ]
 }

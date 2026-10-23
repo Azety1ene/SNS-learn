@@ -3,6 +3,13 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { follows, users } from "@/db/schema";
 import {
+  deleteUnusedMedia,
+  discardMedia,
+  markMediaInUse,
+  uploadImages,
+} from "@/features/media/mutations";
+import { imageFileSchema } from "@/features/media/validation";
+import {
   firstIssueMessage,
   getPgErrorCode,
   PG_FOREIGN_KEY_VIOLATION,
@@ -49,6 +56,29 @@ export async function updateProfile(
     .update(users)
     .set({ name: parsed.data.name, bio: parsed.data.bio })
     .where(eq(users.id, userId));
+}
+
+/**
+ * アイコンを変える。新しい画像をアップロードし、users.image の書き換えと同じトランザクションで「使用中」にする。
+ * 前のアイコンは「使われていない画像」になるので、最後の片付けで消える
+ */
+export async function updateAvatar(userId: string, file: unknown): Promise<{ image: string }> {
+  const parsed = imageFileSchema.safeParse(file);
+  if (!parsed.success) throw new UserFacingError(firstIssueMessage(parsed.error));
+
+  const [uploaded] = await uploadImages(userId, "avatar", [parsed.data]);
+  try {
+    await db.transaction(async (tx) => {
+      await markMediaInUse(tx, [uploaded]);
+      await tx.update(users).set({ image: uploaded.url }).where(eq(users.id, userId));
+    });
+  } catch (error) {
+    await discardMedia([uploaded]);
+    throw error;
+  }
+
+  await deleteUnusedMedia();
+  return { image: uploaded.url };
 }
 
 /** フォローする／やめる。「この状態にする」形なので、同じ操作が 2 回届いても結果は変わらない */

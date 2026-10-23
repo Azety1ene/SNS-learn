@@ -1,14 +1,14 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, isNull, lt, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { follows, likes, posts, users } from "@/db/schema";
-import type { PostView, TimelinePage } from "./types";
+import { follows, likes, media, postMedia, posts, users } from "@/db/schema";
+import type { PostImage, PostView, TimelinePage } from "./types";
 import type { TimelineSource } from "./validation";
 
 export const TIMELINE_PAGE_SIZE = 20;
 const REPLIES_LIMIT = 100;
 
-/** 投稿を取得するときの共通の SELECT（投稿者・いいね数・返信数・自分がいいね済みか） */
+/** 投稿を取得するときの共通の SELECT（投稿者・いいね数・返信数・自分がいいね済みか・画像） */
 function selectPosts(viewerId: string | null) {
   return db
     .select({
@@ -29,6 +29,16 @@ function selectPosts(viewerId: string | null) {
       likedByMe: viewerId
         ? sql<boolean>`exists (select 1 from ${likes} where ${likes.postId} = ${posts.id} and ${likes.userId} = ${viewerId})`
         : sql<boolean>`false`,
+      // 画像: 投稿に付いた画像を、何枚目かの順に JSON の配列にまとめ、1 つの列として受け取る。
+      // 投稿ごとに画像を別々に問い合わせると DB との往復が投稿の数だけ増える（N+1 問題）ので、同じ SQL の中で取る
+      images: sql<PostImage[]>`coalesce((
+        select json_agg(
+          json_build_object('url', ${media.url}, 'width', ${media.width}, 'height', ${media.height}, 'alt', ${postMedia.altText})
+          order by ${postMedia.position}
+        )
+        from ${postMedia} join ${media} on ${media.id} = ${postMedia.mediaId}
+        where ${postMedia.postId} = ${posts.id}
+      ), '[]'::json)`,
     })
     .from(posts)
     .innerJoin(users, eq(users.id, posts.authorId));
@@ -52,6 +62,7 @@ function toPostView(row: PostRow): PostView {
     likeCount: row.likeCount,
     replyCount: row.replyCount,
     likedByMe: row.likedByMe,
+    images: row.images,
   };
 }
 

@@ -45,5 +45,8 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 
+# ローカル開発で保存した画像（src/features/media/storage.ts）
+/.local-storage/
+
 # 環境変数の見本ファイルだけはコミットする
 !.env.example

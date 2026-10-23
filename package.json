@@ -16,6 +16,7 @@
     "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "2.8.2",
     "@vercel/functions": "^3.10.3",
     "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.4",
@@ -25,6 +26,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "sharp": "0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {
