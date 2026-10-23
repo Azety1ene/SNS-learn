@@ -70,7 +70,12 @@ const diskStorage: FileStorage = {
   async delete(pathnames) {
     await Promise.all(
       pathnames.map((pathname) =>
-        rm(/* turbopackIgnore: true */ localFilePath(pathname), { force: true }),
+        // force: ファイルがなければ何もしない。途中がフォルダでない（ENOTDIR）場合も、ファイルはないので同じ扱いにする
+        rm(/* turbopackIgnore: true */ localFilePath(pathname), { force: true }).catch(
+          (error: NodeJS.ErrnoException) => {
+            if (error.code !== "ENOTDIR") throw error;
+          },
+        ),
       ),
     );
   },

@@ -130,19 +130,22 @@ export async function uploadImages(
   );
   const reserved = processed.map((image, index) => ({ ...image, id: ids[index] }));
 
-  try {
-    const saved = await Promise.all(reserved.map((image) => saveFile(image.pathname, image.data)));
-    return reserved.map((image, index) => ({
-      id: image.id,
-      url: saved[index].url,
-      width: image.width,
-      height: image.height,
-    }));
-  } catch (error) {
-    // 一部だけ保存できた場合も、保存した分を消してから失敗を伝える
+  const saved = await Promise.allSettled(
+    reserved.map((image) => saveFile(image.pathname, image.data)),
+  );
+  const failure = saved.find((result) => result.status === "rejected");
+  if (failure) {
+    // 一部だけ保存できた場合も、保存した分を消してから失敗を伝える。
+    // すべての保存が終わるのを待ってから消す（途中で消すと、あとからファイルができて残ってしまう）
     await discardMedia(reserved);
-    throw error;
+    throw failure.reason;
   }
+  return reserved.map((image, index) => ({
+    id: image.id,
+    url: (saved[index] as PromiseFulfilledResult<{ url: string }>).value.url,
+    width: image.width,
+    height: image.height,
+  }));
 }
 
 /**

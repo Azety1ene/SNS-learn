@@ -14,3 +14,4 @@ ADR（Architecture Decision Record）は、設計上の大事な判断を「背�
 | [0005](0005-testing-policy.md) | テスト方針 | 承認 |
 | [0006](0006-milestone-workflow.md) | 進め方の見直し（マイルストーンごとの PR・学ぶ内容の絞り込み） | 承認 |
 | [0007](0007-cache-components.md) | Cache Components を使い、画面部品は Tailwind CSS で作る | 承認 |
+| [0008](0008-image-storage.md) | 画像は DB で枠を予約してから Vercel Blob に保存する | 承認 |

@@ -18,9 +18,9 @@ X（旧Twitter）のような、テキスト中心の SNS を作る学習プロ�
 
 ## 技術スタック
 
-Next.js 16（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Better Auth / Tailwind CSS / Zod / Vitest / Playwright / GitHub Actions
+Next.js 16（App Router）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob / sharp / Better Auth / Tailwind CSS / Zod / Vitest / Playwright / GitHub Actions
 
-選んだ理由は [ADR-0002（技術スタック）](docs/adr/0002-tech-stack.md)、[ADR-0003（認証方式）](docs/adr/0003-authentication.md)、[ADR-0007（Cache Components）](docs/adr/0007-cache-components.md) にあります。
+選んだ理由は [ADR-0002（技術スタック）](docs/adr/0002-tech-stack.md)、[ADR-0003（認証方式）](docs/adr/0003-authentication.md)、[ADR-0007（Cache Components）](docs/adr/0007-cache-components.md)、[ADR-0008（画像の保存）](docs/adr/0008-image-storage.md) にあります。
 
 ## 開発（Claude の作業環境向け）
 

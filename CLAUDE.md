@@ -66,14 +66,15 @@ pnpm db:generate     # src/db/schema.ts の変更からマイグレーション�
   - `actions.ts`: Server Actions。本人確認 → 入力チェック → mutations を呼ぶ → `refresh()` だけの薄い層
   - `validation.ts`: Zod による入力ルール（画面とサーバーで共用）
   - `components/`: 画面の部品
-- `src/lib/`: 共通の部品（認証の設定、セッションの取得、文字数の数え方など）
+- `src/features/media/`: 画像（ブラウザでの縮小、sharp での変換、保存先、上限の予約、使われていない画像の片付け）。posts と users の mutations から呼ぶ
+- `src/lib/`: 共通の部品（認証の設定、セッションの取得、文字数の数え方、サイトの URL など）
 - `src/db/`: テーブル定義と DB 接続
 
 ## 技術スタック
 
-Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob（M2 から）/ Better Auth（GitHub の OAuth、M3 で Google とパスキー。パスワードなし）/ Tailwind CSS / lucide-react / Zod / Vitest / Playwright / GitHub Actions / pnpm
+Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（PostgreSQL）/ Drizzle ORM / Vercel Blob と sharp（M2 から）/ Better Auth（GitHub の OAuth、M3 で Google とパスキー。パスワードなし）/ Tailwind CSS / lucide-react / Zod / Vitest / Playwright / GitHub Actions / pnpm
 
-- 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）
+- 理由は ADR-0002（技術スタック）、ADR-0003（認証方式）、ADR-0007（Cache Components）、ADR-0008（画像の保存）
 - Next.js 16 は学習データと違う点が多い。Next.js の機能を使うときは `node_modules/next/dist/docs/` の該当ページを先に読む（`AGENTS.md` を参照）
 
 ## DB のルール
@@ -83,21 +84,25 @@ Next.js 16（App Router、Cache Components）/ TypeScript / Vercel / Neon（Post
 - 守るべきルールは、アプリ（Zod）と DB の制約の両方に入れる。DB のエラーコードは `src/lib/errors.ts` で分かりやすいメッセージに変える
 - 書き込みはできるだけ 1 文で完結させる（`on conflict do nothing`、条件付きの `update`／`delete` など）。複数の文が必要なら `db.transaction` でまとめる
 - インデックスは `EXPLAIN ANALYZE` で測ってから足し、結果を学習ノートに載せる
+- `media`（画像）は論理削除（`deleted_at`）。使用中の画像だけを扱うときは `deleted_at is null` を付ける。画像のファイルは「どこからも使われていない画像」を探して消す（`deleteUnusedMedia`、ADR-0008）
 
 ## テスト方針（ADR-0005）
 
 - DB をモックしない。テストは本物の PostgreSQL で動かす（作業環境ではローカルの PostgreSQL 16、CI ではサービスコンテナ）
 - 自動テストで通れない外部のログイン画面（GitHub など）だけは、ログイン済みの状態（セッションと署名付き Cookie）を直接作って代わりにする（`e2e/support/fixtures.ts`）
+- 画像の保存先は、テストと E2E ではディスク（`LOCAL_STORAGE_DIR`）。Vercel Blob にはつながない
+- E2E でファイルを選ぶときは、ボタンを押して filechooser で選ぶ（`e2e/images.spec.ts` の `chooseFiles`）。ハイドレーション前の操作は無視されるため
 
 ## 作業環境の注意
 
 - このクラウド環境からは Vercel や Neon に直接つながらない。デプロイは Vercel の GitHub 連携に任せる
 - コンテナは時間が経つと消えるので、作業途中でも push して残す
 - リポジトリは public。秘密情報は絶対にコミットしない
+- ローカルで投稿した画像は `.local-storage/` に保存される（git には入らない）
 
 ## 無料枠の注意
 
-- Vercel Blob はアップロード等が月 2,000 回、保存 1GB まで。画像機能は必ず上限のガードとセットで作る
+- Vercel Blob はアップロード等が月 2,000 回、保存 1GB まで。画像機能は必ず上限のガードとセットで作る（上限の値は `src/features/media/mutations.ts`）
 - Neon は保存 0.5GB、DB ブランチ 10 個まで。5 分アクセスがないと休止し、次のアクセスで自動的に再開する
 - サーバー（Vercel）と DB（Neon）はどちらもシンガポールに置く（Neon に東京がないため。`vercel.json`）
 - 上限の一覧は `docs/requirements.md` の「6. 制約（無料枠）」にある

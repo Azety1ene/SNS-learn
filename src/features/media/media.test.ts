@@ -181,6 +181,21 @@ describe("uploadImages（変換 → 予約 → 保存）", () => {
     expect(await countStoredFiles()).toBe(0);
   });
 
+  it("ファイルの保存に失敗したら、予約した行を「削除済み」にして（容量の枠を空けて）失敗を伝える", async () => {
+    const alice = await createUser();
+    // 保存先のフォルダ local/post を作れないように、同じ名前のファイルを置いておく
+    await mkdir(path.join(storageDir(), "local"), { recursive: true });
+    await writeFile(path.join(storageDir(), "local", "post"), "フォルダではない");
+
+    await expect(
+      uploadImages(alice.id, "post", [await createTestImageFile(), await createTestImageFile()]),
+    ).rejects.toThrow();
+
+    const rows = await db.select().from(media);
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.deletedAt !== null)).toBe(true);
+  });
+
   it("画像でないファイルが混ざっていたら、予約も保存もしない", async () => {
     const alice = await createUser();
     const notImage = new File(["hello"], "photo.jpg", { type: "image/jpeg" });
