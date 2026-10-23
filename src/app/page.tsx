@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LoginButton } from "@/components/login-button";
 import { PostListSkeleton } from "@/components/skeletons";
+import { LoginButtons } from "@/features/login-methods/components/login-buttons";
 import { PostComposer } from "@/features/posts/components/post-composer";
 import { Timeline } from "@/features/posts/components/timeline";
+import { googleLoginEnabled } from "@/lib/auth";
 import { getViewer } from "@/lib/session";
 
 // ホーム（/）。ページ自体は async にせず、ログイン状態を読む部分だけを <Suspense> の中に置く。
@@ -49,7 +50,7 @@ function Welcome() {
           短い文章で、いまの気持ちや出来事を気軽に共有できる SNS です。
         </p>
       </div>
-      <LoginButton />
+      <LoginButtons googleEnabled={googleLoginEnabled} />
       <p className="text-center text-sm">
         <Link href="/explore" className="text-sky-600 hover:underline dark:text-sky-400">
           ログインせずにみんなの投稿を見る

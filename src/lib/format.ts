@@ -10,6 +10,13 @@ const dateTimeFormat = new Intl.DateTimeFormat("ja-JP", {
   minute: "2-digit",
 });
 
+const dateFormat = new Intl.DateTimeFormat("ja-JP", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 const yearMonthFormat = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
   year: "numeric",
@@ -19,6 +26,11 @@ const yearMonthFormat = new Intl.DateTimeFormat("ja-JP", {
 /** 例: 2026/10/23 12:34 */
 export function formatDateTime(iso: string): string {
   return dateTimeFormat.format(new Date(iso));
+}
+
+/** 例: 2026/10/23 */
+export function formatDate(iso: string): string {
+  return dateFormat.format(new Date(iso));
 }
 
 /** 例: 2026年10月 */

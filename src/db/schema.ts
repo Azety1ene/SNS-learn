@@ -121,6 +121,47 @@ export const verifications = pgTable(
   (t) => [index("verifications_identifier_idx").on(t.identifier)],
 );
 
+/**
+ * パスキー（M3）。ログインに使う「鍵のペア」のうち、公開鍵だけをここに保存する。
+ * 秘密鍵は利用者の端末（iCloud キーチェーンや Google パスワードマネージャーなど）の中から出ないので、
+ * この表が漏れても、なりすましには使えない。項目は Better Auth のパスキーのプラグインが決めた形に合わせている
+ */
+export const passkeys = pgTable(
+  "passkeys",
+  {
+    id: text("id").primaryKey(),
+    /** 一覧に表示する名前（例: iPhone） */
+    name: text("name"),
+    /** 公開鍵（base64 の文字列）。ログインのときに届く署名を、これで確かめる */
+    publicKey: text("public_key").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 端末が作ったパスキーの ID。ログインのとき、届いた署名がどのパスキーのものかを探すのに使う */
+    credentialID: text("credential_id").notNull().unique(),
+    /**
+     * 署名した回数（端末が数えて送ってくる）。前回より増えていなければ、パスキーの複製を疑って断る。
+     * 0〜約 42 億まで（符号なし 32 ビット）なので、integer（約 21 億まで）ではなく bigint にしている
+     */
+    counter: bigint("counter", { mode: "number" }).notNull(),
+    /** singleDevice（その端末だけにある）か multiDevice（iCloud などで別の端末にも同期される） */
+    deviceType: text("device_type").notNull(),
+    /** 別の端末へバックアップ（同期）されているか */
+    backedUp: boolean("backed_up").notNull(),
+    /** 端末とのやりとりの方法（internal・hybrid など、カンマ区切り） */
+    transports: text("transports"),
+    createdAt: createdAt(),
+    /** パスキーを保存している仕組み（パスワード管理アプリなど）の種類を表す ID */
+    aaguid: text("aaguid"),
+  },
+  (t) => [
+    // 設定画面で「自分のパスキーの一覧」を出すため。ユーザー削除時に、その人のパスキーを探すのにも使われる
+    index("passkeys_user_id_idx").on(t.userId),
+    check("passkeys_device_type", sql`${t.deviceType} in ('singleDevice', 'multiDevice')`),
+    check("passkeys_counter_range", sql`${t.counter} between 0 and 4294967295`),
+  ],
+);
+
 /** ログイン処理への連続アクセスを制限するためのカウンター */
 export const rateLimits = pgTable("rate_limits", {
   id: text("id").primaryKey(),

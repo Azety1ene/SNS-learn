@@ -36,6 +36,9 @@ export default defineConfig({
       // GitHub へのログインはテストでは行わないので、仮の値を入れておく
       GITHUB_CLIENT_ID: "e2e-not-used",
       GITHUB_CLIENT_SECRET: "e2e-not-used",
+      // Google のボタンや連携の画面を表示させるため（Google へのログイン自体は行わない）
+      GOOGLE_CLIENT_ID: "e2e-not-used",
+      GOOGLE_CLIENT_SECRET: "e2e-not-used",
       LOCAL_STORAGE_DIR: E2E_STORAGE_DIR,
     },
   },

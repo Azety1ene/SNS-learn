@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { FormSkeleton } from "@/components/skeletons";
+import { LoginMethodsSection } from "@/features/login-methods/components/login-methods-section";
 import { signOutAction } from "@/features/users/actions";
 import { AvatarForm } from "@/features/users/components/avatar-form";
 import { ProfileForm } from "@/features/users/components/profile-form";
@@ -10,21 +11,23 @@ import { requireViewer } from "@/lib/session";
 
 export const metadata: Metadata = { title: "設定" };
 
-export default function SettingsPage() {
+export default function SettingsPage({ searchParams }: PageProps<"/settings">) {
   return (
     <>
       <PageHeader title="設定" />
       <Suspense fallback={<FormSkeleton />}>
-        <SettingsContent />
+        <SettingsContent searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-async function SettingsContent() {
+async function SettingsContent({ searchParams }: Pick<PageProps<"/settings">, "searchParams">) {
   // ログインしていなければログインページへ、初回登録がまだなら初回登録ページへ移動する
   const viewer = await requireViewer();
   const profile = await getEditableProfile(viewer.id);
+  // 外部アカウントの連携に失敗すると、?error=理由 を付けてこのページに戻ってくる
+  const { error } = await searchParams;
 
   return (
     <>
@@ -42,6 +45,18 @@ async function SettingsContent() {
           プロフィール
         </h2>
         <ProfileForm defaultName={profile?.name ?? viewer.name} defaultBio={profile?.bio ?? ""} />
+      </section>
+      <section
+        aria-labelledby="login-methods-heading"
+        className="border-t border-zinc-200 dark:border-zinc-800"
+      >
+        <h2 id="login-methods-heading" className="px-4 pt-6 font-bold">
+          ログイン方法
+        </h2>
+        <LoginMethodsSection
+          viewerId={viewer.id}
+          linkError={typeof error === "string" ? error : undefined}
+        />
       </section>
       <section
         aria-labelledby="account-heading"
